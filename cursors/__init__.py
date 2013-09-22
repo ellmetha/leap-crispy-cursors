@@ -55,6 +55,9 @@ class BaseCursorListener(Listener):
 			self.fixed_dtstart = time.time()
 		return False
 
+	def is_claw(self, pos):
+		pass
+
 	def on_init(self, controller):
 		# Force the listener to stop if therse is no controller and no leapd daemon launched
 		showmessage("Initializing listener", Status.RUNNING, Colors.BLUE)
@@ -72,7 +75,7 @@ class BaseCursorListener(Listener):
 			self.previousframes_set.append(controller.frame(self.numframes + i_frame))
 
 	def on_connect(self, controller):
-		showmessage("Initializing listener", Status.SUCCESS, Colors.GREEN, update=True)
+		showmessage("Initializing listener", Status.SUCCESS, Colors.GREEN, update=True, newline=True)
 
 	def on_disconnect(self, controller):
 		print("Disconnected")

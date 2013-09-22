@@ -29,9 +29,11 @@ class Status:
     ERROR = "Error"
 
 
-def showmessage(message, status, color, update=False):
+def showmessage(message, status, color, update=False, newline=False):
     if update:
         sys.stdout.write(Colors.NO + "\r{0}".format(message) + color + "%s" % '[{0}]'.format(status).rjust(79-len(message)) + Colors.NO)
     else:
         sys.stdout.write(Colors.NO + "{0}".format(message) + color + "%s" % '[{0}]'.format(status).rjust(79-len(message)) + Colors.NO)
         sys.stdout.flush()
+    if newline:
+        sys.stdout.write("\n")
