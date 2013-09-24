@@ -12,8 +12,8 @@ class CrispyPitchCursor(BaseCursorListener):
 	Handles movements by using hand pitch, roll and yaw.
 	"""
 	# Multipliers on roll and pitch
-	roll_mult = 6
-	pitch_mult = 6
+	roll_mult = 4
+	pitch_mult = 4
 
 	def __init__(self, *args, **kwargs):
 		super(CrispyPitchCursor, self).__init__(*args, **kwargs)
@@ -23,12 +23,15 @@ class CrispyPitchCursor(BaseCursorListener):
 			self.pitch_mult = kwargs['pitch_mult']
 
 	def update(self, frame, data):
-		if not frame.hands.empty:
-			# Get the first hand
-			hand = frame.hands[0]
+		# Get the required data
+		hand_state = data['leap_state']['current']
+		hand_state_prev = data['leap_state']['current']
+
+		if hand_state.av_numhands >= 0.5:
 			# Compute X and Y offset from roll, pitch and yaw values
-			x_offset = (-data['av_roll'] - data['av_yaw']) * self.roll_mult
-			y_offset = data['av_pitch'] * self.pitch_mult
+			x_offset = (-hand_state.av_roll - hand_state.av_yaw) * self.roll_mult
+			y_offset = hand_state.av_pitch * self.pitch_mult
+
 			# Move it!
 			self.move(x_offset, y_offset)
 

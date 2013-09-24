@@ -9,6 +9,7 @@ import argparse
 from Leap import Controller
 
 # Local application / specific library imports
+from cursors import CrispyPathCursor
 from cursors import CrispyPitchCursor
 
 
