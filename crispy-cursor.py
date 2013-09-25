@@ -17,7 +17,7 @@ class LeapCrispyCursor:
 	def __init__(self, *args, **kwargs):
 		# Create a Leap controller and a listener
 		self.controller = Controller()
-		self.listener = CrispyPitchCursor()
+		self.listener = CrispyPathCursor()
 
 	def run(self):
 		self.controller.add_listener(self.listener)

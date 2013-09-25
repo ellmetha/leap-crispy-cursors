@@ -15,6 +15,9 @@ from utils import showmessage
 from utils import Status
 
 
+NaN = float('NaN')
+
+
 class CursorState:
 	"""
 	Store some information about the current and previous states of the frames used to
@@ -23,6 +26,8 @@ class CursorState:
 
 	def __init__(self, frames, numframes, *args, **kwargs):
 		norm = 1. / numframes
+
+		self.ts = frames[0].timestamp / 1000000.0
 		self.av_numhands = sum(len(fr.hands) for fr in frames) * norm
 		# Calculates the hand's average pitch, roll and yaw
 		self.av_pitch = sum(fr.hands[0].direction.pitch for fr in frames) * norm
@@ -31,20 +36,14 @@ class CursorState:
 		# Calculates the average number of fingers
 		self.av_fingers = sum(len(fr.hands[0].fingers) for fr in frames) * norm
 		# Calculates the hand's average finger tip position
-		self.av_tip_pos = [0., 0., 0.]
-		nadded = 0
-		for fr in frames[:numframes]:
-			if fr.hands[0].is_valid and len(fr.hands[0].fingers) > 0:
-				norm_finger = 1. / len(fr.hands[0].fingers)
-				for fg in fr.hands[0].fingers:
-					self.av_tip_pos[0] += fg.tip_position[0] * norm_finger
-					self.av_tip_pos[1] += fg.tip_position[1] * norm_finger
-					self.av_tip_pos[2] += fg.tip_position[2] * norm_finger
-				nadded += 1
-		if nadded >= 1:
-			self.av_tip_pos[0] *= 1. / nadded
-			self.av_tip_pos[1] *= 1. / nadded
-			self.av_tip_pos[2] *= 1. / nadded
+		try:
+			self.av_tip_pos = Vector(0, 0, 0)
+			for fr in frames:
+				self.av_tip_pos += sum((fg.tip_position for fg in fr.hands[0].fingers), Vector()) / len(fr.hands[0].fingers)
+			self.av_tip_pos *= norm
+		except:
+			raise
+			self.av_tip_pos = NaN
 
 
 class BaseCursorListener(Listener):

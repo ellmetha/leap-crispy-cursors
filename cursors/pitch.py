@@ -2,6 +2,7 @@
 
 # Standard library imports
 # Third party imports
+from Leap import Vector
 
 # Local application / specific library imports
 from . import BaseCursorListener
