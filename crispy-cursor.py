@@ -14,10 +14,17 @@ from cursors import CrispyPitchCursor
 
 
 class LeapCrispyCursor:
-	def __init__(self, *args, **kwargs):
+	CURSOR_CHOICES = {
+		'path': CrispyPathCursor,
+		'pitch': CrispyPitchCursor,
+	}
+
+	def __init__(self, parsed_args, *args, **kwargs):
+		self.parsed_args = parsed_args
+
 		# Create a Leap controller and a listener
 		self.controller = Controller()
-		self.listener = CrispyPathCursor()
+		self.listener = self.CURSOR_CHOICES[self.parsed_args.mode]()
 
 	def run(self):
 		self.controller.add_listener(self.listener)
@@ -40,11 +47,15 @@ def main():
 		description='Allow the Leap Motion to be used as a mouse device',
 		epilog='Propulsed by ellmetha'
 	)
-	# Specify the logging output file option
+	# Specify the available options
+	parser.add_argument('-m', '--mode', type=str,
+		choices=LeapCrispyCursor.CURSOR_CHOICES,
+		default='path',
+		help='cursor mode -- \'path\' forces cursor to follow hand and fingers movements ; \'pitch\' forces cursor to follow hand pitch/roll/yaw'
+	)
 	parser.add_argument('-l', '--log', type=str,
 		help='log command output to a file instead of stdout'
 	)
-
 
 	# Parse args!
 	args = parser.parse_args()
