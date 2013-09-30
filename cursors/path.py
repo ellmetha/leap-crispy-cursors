@@ -45,9 +45,10 @@ class CrispyPathCursor(BaseCursorListener):
 			# Computes some differences between the current and previous frames sets
 			d_av_fingers = hand_state.av_fingers - hand_state_prev.av_fingers
 			d_av_tip_pos = hand_state.av_tip_pos - hand_state_prev.av_tip_pos
-			# Compute the elapsed time between the current and previous frames sets
+			d_av_palm_pos = hand_state.av_palm_pos - hand_state_prev.av_palm_pos
+			# Computes the elapsed time between the current and previous frames sets
 			elapsed = max(0.000001, hand_state.ts - hand_state_prev.ts)
-			# Compute velocity and acceleration
+			# Computes velocity and acceleration
 			velocity = d_av_tip_pos.magnitude / elapsed
 		except:
 			pass
@@ -64,6 +65,13 @@ class CrispyPathCursor(BaseCursorListener):
 
 				# Move it!
 				self.move(d_av_tip_pos.x, -d_av_tip_pos.y)
+		elif self.active_fist:
+				# Move it!
+				self.move(d_av_palm_pos.x, -d_av_palm_pos.y)
 
 		if data['actions']['click']:
 			self.click()
+		if data['actions']['press']:
+			self.press()
+		if data['actions']['release']:
+			self.release()

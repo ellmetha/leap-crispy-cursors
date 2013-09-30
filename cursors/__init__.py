@@ -44,14 +44,37 @@ class CursorState:
 		except:
 			raise
 			self.av_tip_pos = NaN
+		# Calculates the hand's average palm position
+		try:
+			self.av_palm_pos = Vector(0, 0, 0)
+			for fr in frames:
+				self.av_palm_pos += fr.hands[0].palm_position
+			self.av_palm_pos *= norm
+		except:
+			raise
+			self.av_palm_pos = NaN
+		# Check whether the hand is horizontal
+		if self.av_numhands > 0.5:
+			self.is_horizontal = 0
+			self.is_vertical = 0
+			if self.av_pitch > -10 and self.av_pitch < 20:
+				self.is_horizontal = 1
+			if self.av_pitch > 55 and self.av_pitch < 70:
+				self.is_vertical = 1
+			if self.av_pitch < -60 and self.av_pitch > -90:
+				self.is_vertical = -1
 
 
 class BaseCursorListener(Listener):
 	"""
 	Defines generic callback functions in order to convert frame events into mouse actions.
 	"""
-	click_timeout = 1000
-	numframes = 10 # Number of frames to average
+	# After this amount of time, a click event is generared (ms)
+	click_timeout = 600
+	# Number of frames to average
+	numframes = 10
+	# Indicates if a clenched fist is considered
+	active_fist = False
 
 	def __init__(self, *args, **kwargs):
 		super(BaseCursorListener, self).__init__(*args, **kwargs)
@@ -69,7 +92,9 @@ class BaseCursorListener(Listener):
 
 		# Init mouse position tracking
 		self.previous_pos = self.mouse.position()
-		self.fixed_dtstart = 0
+
+		# Init timers
+		self.click_dtstart = 0
 
 	def is_clicking(self, data):
 		"""
@@ -79,16 +104,43 @@ class BaseCursorListener(Listener):
 		"""
 		if self.previous_pos == data['pos']:
 			current_time = time.time()
-			elapsed_time = current_time - self.fixed_dtstart
+			elapsed_time = current_time - self.click_dtstart
 			if (elapsed_time * 1000) >= self.click_timeout:
-				self.fixed_dtstart = time.time()
+				self.click_dtstart = time.time()
 				return True
 		else:
-			self.fixed_dtstart = time.time()
+			self.click_dtstart = time.time()
 		return False
 
-	def is_claw(self, pos):
-		pass
+	def is_pressing(self, data):
+		"""
+		Determines whether the mouse is pressing or not.
+		The default behavior is to cause a press action when no fingers are available (the hand
+		is closed).
+		"""
+		# Get the required data
+		hand_state = data['leap_state']['current']
+		hand_state_prev = data['leap_state']['prev']
+
+		if hand_state.av_numhands == 1 and hand_state.is_horizontal and ((hand_state_prev.av_fingers >= 3 and hand_state.av_fingers <= 1.2)
+				or (self.active_fist and hand_state.av_fingers < 1)):
+			self.active_fist = True
+			return True
+		return False
+
+	def is_releasing(self, data):
+		"""
+		Determines whether the mouse is releasing or not.
+		The default behabior is to cause a release action when the hand is not closed.
+		"""
+		# Get the required data
+		hand_state = data['leap_state']['current']
+		hand_state_prev = data['leap_state']['prev']
+
+		if hand_state.av_fingers >= 2.5 and hand_state.av_palm_pos[2] < 0 and self.active_fist:
+			self.active_fist = False
+			return True
+		return False
 
 	def on_init(self, controller):
 		# Force the listener to stop if therse is no controller and no leapd daemon launched
@@ -118,7 +170,7 @@ class BaseCursorListener(Listener):
 	def on_frame(self, controller):
 		# Get the most recent frame
 		latest_frame = controller.frame()
-		
+
 		# Update the frames sets
 		self.previousframes_set.pop(0)
 		self.previousframes_set.append(self.frames_set[0])
@@ -142,10 +194,14 @@ class BaseCursorListener(Listener):
 
 		# Determine what is going on above the Leap
 		click = self.is_clicking(data)
+		press = self.is_pressing(data)
+		release = self.is_releasing(data)
 
 		data.update({
 			'actions': {
 				'click': click,
+				'press': press,
+				'release': release,
 			}
 		})
 
@@ -177,6 +233,24 @@ class BaseCursorListener(Listener):
 		current_pos = self.mouse.position()
 		# Click!
 		self.mouse.click(*current_pos)
+
+	def press(self):
+		"""
+		Do a press at the current mouse position.
+		"""
+		# Get the mouse position
+		current_pos = self.mouse.position()
+		# Click!
+		self.mouse.press(*current_pos)
+
+	def release(self):
+		"""
+		Do a release at the current mouse position.
+		"""
+		# Get the mouse position
+		current_pos = self.mouse.position()
+		# Click!
+		self.mouse.release(*current_pos)
 
 
 # Sub-packages imports
