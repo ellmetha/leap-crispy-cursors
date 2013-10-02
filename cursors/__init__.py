@@ -42,7 +42,6 @@ class CursorState:
 				self.av_tip_pos += sum((fg.tip_position for fg in fr.hands[0].fingers), Vector()) / len(fr.hands[0].fingers)
 			self.av_tip_pos *= norm
 		except:
-			raise
 			self.av_tip_pos = NaN
 		# Calculates the hand's average palm position
 		try:
@@ -51,7 +50,6 @@ class CursorState:
 				self.av_palm_pos += fr.hands[0].palm_position
 			self.av_palm_pos *= norm
 		except:
-			raise
 			self.av_palm_pos = NaN
 		# Check whether the hand is horizontal
 		if self.av_numhands > 0.5:
@@ -63,6 +61,16 @@ class CursorState:
 				self.is_vertical = 1
 			if self.av_pitch < -60 and self.av_pitch > -90:
 				self.is_vertical = -1
+		# Compute the hand's average palm velocity
+		self.av_palm_vel = sum(fr.hands[0].palm_velocity[1] for fr in frames) * norm
+		# Compute the hand's average fingers speed
+		try:
+			self.av_fingers_speed = 0
+			for fr in frames:
+				self.av_fingers_speed += sum(fg.tip_velocity[1] for fg in fr.hands[0].fingers) / len(fr.hands[0].fingers)
+			self.av_fingers_speed *= norm
+		except:
+			self.av_fingers_speed = NaN
 
 
 class BaseCursorListener(Listener):
@@ -71,10 +79,10 @@ class BaseCursorListener(Listener):
 	"""
 	# After this amount of time, a click event is generared (ms)
 	click_timeout = 600
+	# After this amount of time, a press event is generared (ms)
+	press_timeout = 600
 	# Number of frames to average
 	numframes = 10
-	# Indicates if a clenched fist is considered
-	active_fist = False
 
 	def __init__(self, *args, **kwargs):
 		super(BaseCursorListener, self).__init__(*args, **kwargs)
@@ -95,6 +103,11 @@ class BaseCursorListener(Listener):
 
 		# Init timers
 		self.click_dtstart = 0
+		self.press_dtstart = 0
+
+		# Init flags
+		self.active_fist = False #Indicates if a clenched fist is considered
+		self.press_requested = False # Indicates if a mouse press event is requested
 
 	def is_clicking(self, data):
 		"""
@@ -102,10 +115,13 @@ class BaseCursorListener(Listener):
 		The default behavior is to cause a click when the mouse position remains the same
 		during a fixed amount of time. This value is given by the click_timeout attribute.
 		"""
+		# Get the required data
+		hand_state = data['leap_state']['current']
+
 		if self.previous_pos == data['pos']:
 			current_time = time.time()
 			elapsed_time = current_time - self.click_dtstart
-			if (elapsed_time * 1000) >= self.click_timeout:
+			if (elapsed_time * 1000) >= self.click_timeout and hand_state.av_fingers >=4:
 				self.click_dtstart = time.time()
 				return True
 		else:
@@ -122,10 +138,19 @@ class BaseCursorListener(Listener):
 		hand_state = data['leap_state']['current']
 		hand_state_prev = data['leap_state']['prev']
 
-		if hand_state.av_numhands == 1 and hand_state.is_horizontal and ((hand_state_prev.av_fingers >= 3 and hand_state.av_fingers <= 1.2)
-				or (self.active_fist and hand_state.av_fingers < 1)):
-			self.active_fist = True
-			return True
+		current_time = time.time()
+		elapsed_time = current_time - self.press_dtstart
+
+		if hand_state.av_fingers <= 1.2:
+			if hand_state.av_numhands == 1 and hand_state.is_horizontal and ((hand_state_prev.av_fingers >= 3 and hand_state.av_fingers <= 1.2)
+					or (self.active_fist and hand_state.av_fingers < 1)):
+				self.press_requested = True
+			elif hand_state.av_numhands == 1 and hand_state.av_fingers <= 1.2 and self.press_requested == True and (elapsed_time * 1000) >= self.press_timeout:
+				self.active_fist = True
+				return True
+		else:
+			self.press_dtstart = time.time()
+			self.press_requested = False
 		return False
 
 	def is_releasing(self, data):
@@ -139,8 +164,23 @@ class BaseCursorListener(Listener):
 
 		if hand_state.av_fingers >= 2.5 and hand_state.av_palm_pos[2] < 0 and self.active_fist:
 			self.active_fist = False
+			self.want_press = False
 			return True
 		return False
+
+	def is_scrolling_up(self, data):
+		"""
+		Determines whether the mouse is scrolling up or not.
+		"""
+		# Get the required data
+		hand_state = data['leap_state']['current']
+
+		if hand_state.av_fingers >= 4 and not self.active_fist:
+			if hand_state.av_fingers_speed - hand_state.av_palm_vel < -150:
+				repeats = abs(int(hand_state.av_fingers_speed / 50.))
+				repeats = max(repeats, 0)
+				repeats = min(repeats, 5)
+				# print 'scrolling up ',repeats
 
 	def on_init(self, controller):
 		# Force the listener to stop if therse is no controller and no leapd daemon launched
@@ -196,6 +236,7 @@ class BaseCursorListener(Listener):
 		click = self.is_clicking(data)
 		press = self.is_pressing(data)
 		release = self.is_releasing(data)
+		scroll_up = self.is_scrolling_up(data)
 
 		data.update({
 			'actions': {

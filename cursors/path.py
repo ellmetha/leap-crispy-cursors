@@ -31,7 +31,7 @@ class CrispyPathCursor(BaseCursorListener):
 		if numfingers <= 0:
 			return 0
 		else:
-			return (16.0 / (numfingers ** 3))
+			return (16.0 / (numfingers ** 4))
 
 	def update(self, frame, data):
 		# Get the required data
