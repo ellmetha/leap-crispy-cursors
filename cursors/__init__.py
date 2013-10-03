@@ -180,7 +180,8 @@ class BaseCursorListener(Listener):
 				repeats = abs(int(hand_state.av_fingers_speed / 50.))
 				repeats = max(repeats, 0)
 				repeats = min(repeats, 5)
-				# print 'scrolling up ',repeats
+				return repeats
+		return False
 
 	def on_init(self, controller):
 		# Force the listener to stop if therse is no controller and no leapd daemon launched
@@ -243,6 +244,7 @@ class BaseCursorListener(Listener):
 				'click': click,
 				'press': press,
 				'release': release,
+				'scroll_up': scroll_up,
 			}
 		})
 
@@ -292,6 +294,15 @@ class BaseCursorListener(Listener):
 		current_pos = self.mouse.position()
 		# Click!
 		self.mouse.release(*current_pos)
+
+	def scroll_up(self, repeats=0):
+		"""
+		Do a scroll action.
+		"""
+		# Scroll!
+		for irep in range(repeats):
+			self.mouse.scroll(vertical=4)
+			time.sleep(.1)
 
 
 # Sub-packages imports

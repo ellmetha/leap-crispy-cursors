@@ -50,11 +50,13 @@ class CrispyPathCursor(BaseCursorListener):
 			if d_av_fingers > 0:
 				self.last_change = hand_state.ts
 			if hand_state.ts - self.last_change < (self.finger_pause / 1000):
-				d_av_tip_pos *= 0 # don't move pointer when #fingers changes
+				d_av_tip_pos *= 0 # don't move pointer when fingers changes
 
 			if hand_state.av_numhands >= 0.5 and hand_state.av_fingers >= 1:
 				# The cursor speed will be inversely proportional to the number of fingers detected by the controller
-				d_av_tip_pos *= (1. / hand_state.av_fingers) * 2
+				d_av_tip_pos *= 1. / hand_state.av_fingers
+				if hand_state.av_fingers >= 4:
+					d_av_tip_pos /= 2
 
 				# Move it!
 				self.move(d_av_tip_pos.x, -d_av_tip_pos.y)
@@ -68,3 +70,5 @@ class CrispyPathCursor(BaseCursorListener):
 			self.press()
 		if data['actions']['release']:
 			self.release()
+		if data['actions']['scroll_up']:
+			self.scroll_up(repeats=data['actions']['scroll_up'])
