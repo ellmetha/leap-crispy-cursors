@@ -183,6 +183,21 @@ class BaseCursorListener(Listener):
 				return repeats
 		return False
 
+	def is_scrolling_down(self, data):
+		"""
+		Determines whether the mouse is scrolling down or not.
+		"""
+		# Get the required data
+		hand_state = data['leap_state']['current']
+
+		if hand_state.av_fingers >= 4 and not self.active_fist:
+			if hand_state.av_fingers_speed -hand_state.av_palm_vel > 150:
+				repeats = abs(int(hand_state.av_fingers_speed / 50.))
+				repeats = max(repeats, 0)
+				repeats = min(repeats, 5)
+				return repeats
+		return False
+
 	def on_init(self, controller):
 		# Force the listener to stop if therse is no controller and no leapd daemon launched
 		showmessage("Initializing listener", Status.RUNNING, Colors.BLUE)
@@ -238,6 +253,7 @@ class BaseCursorListener(Listener):
 		press = self.is_pressing(data)
 		release = self.is_releasing(data)
 		scroll_up = self.is_scrolling_up(data)
+		scroll_down = self.is_scrolling_down(data)
 
 		data.update({
 			'actions': {
@@ -245,6 +261,7 @@ class BaseCursorListener(Listener):
 				'press': press,
 				'release': release,
 				'scroll_up': scroll_up,
+				'scroll_down': scroll_down,
 			}
 		})
 
@@ -297,11 +314,20 @@ class BaseCursorListener(Listener):
 
 	def scroll_up(self, repeats=0):
 		"""
-		Do a scroll action.
+		Do a scroll up action.
 		"""
 		# Scroll!
 		for irep in range(repeats):
 			self.mouse.scroll(vertical=4)
+			time.sleep(.1)
+
+	def scroll_down(self, repeats=0):
+		"""
+		Do a scroll down action.
+		"""
+		# Scroll!
+		for irep in range(repeats):
+			self.mouse.scroll(vertical=-4)
 			time.sleep(.1)
 
 

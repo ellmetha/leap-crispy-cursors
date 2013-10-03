@@ -72,3 +72,5 @@ class CrispyPathCursor(BaseCursorListener):
 			self.release()
 		if data['actions']['scroll_up']:
 			self.scroll_up(repeats=data['actions']['scroll_up'])
+		if data['actions']['scroll_down']:
+			self.scroll_down(repeats=data['actions']['scroll_down'])
