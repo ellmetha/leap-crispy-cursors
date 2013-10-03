@@ -26,13 +26,6 @@ class CrispyPathCursor(BaseCursorListener):
 		super(CrispyPathCursor, self).__init__(*args, **kwargs)
 		self.last_change = 0
 
-	def get_velocity_multiplier(self, numfingers):
-		numfingers = int(numfingers)
-		if numfingers <= 0:
-			return 0
-		else:
-			return (16.0 / (numfingers ** 4))
-
 	def update(self, frame, data):
 		# Get the required data
 		hand_state = data['leap_state']['current']
@@ -61,7 +54,7 @@ class CrispyPathCursor(BaseCursorListener):
 
 			if hand_state.av_numhands >= 0.5 and hand_state.av_fingers >= 1:
 				# The cursor speed will be inversely proportional to the number of fingers detected by the controller
-				d_av_tip_pos *= 1. / hand_state.av_fingers
+				d_av_tip_pos *= (1. / hand_state.av_fingers) * 2
 
 				# Move it!
 				self.move(d_av_tip_pos.x, -d_av_tip_pos.y)
