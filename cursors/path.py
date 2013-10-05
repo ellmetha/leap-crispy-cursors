@@ -36,13 +36,13 @@ class CrispyPathCursor(BaseCursorListener):
 		velocity = NaN # (mm/s)
 		try:
 			# Computes some differences between the current and previous frames sets
+			d_av_palm_pos = hand_state.av_palm_pos - hand_state_prev.av_palm_pos
 			d_av_fingers = hand_state.av_fingers - hand_state_prev.av_fingers
 			d_av_tip_pos = hand_state.av_tip_pos - hand_state_prev.av_tip_pos
-			d_av_palm_pos = hand_state.av_palm_pos - hand_state_prev.av_palm_pos
 			# Computes the elapsed time between the current and previous frames sets
 			elapsed = max(0.000001, hand_state.ts - hand_state_prev.ts)
 			# Computes velocity and acceleration
-			velocity = d_av_tip_pos.magnitude / elapsed
+			velocity = d_av_palm_pos.magnitude / elapsed
 		except:
 			pass
 
@@ -50,16 +50,14 @@ class CrispyPathCursor(BaseCursorListener):
 			if d_av_fingers > 0:
 				self.last_change = hand_state.ts
 			if hand_state.ts - self.last_change < (self.finger_pause / 1000):
-				d_av_tip_pos *= 0 # don't move pointer when fingers changes
+				d_av_palm_pos *= 0 # don't move pointer when fingers changes
 
 			if hand_state.av_numhands >= 0.5 and hand_state.av_fingers >= 1:
 				# The cursor speed will be inversely proportional to the number of fingers detected by the controller
-				d_av_tip_pos *= 1. / hand_state.av_fingers
-				if hand_state.av_fingers >= 4:
-					d_av_tip_pos /= 2
+				d_av_palm_pos *= 1. / hand_state.av_fingers
 
 				# Move it!
-				self.move(d_av_tip_pos.x, -d_av_tip_pos.y)
+				self.move(d_av_palm_pos.x, -d_av_palm_pos.y)
 		elif self.active_fist:
 				# Move it!
 				self.move(d_av_palm_pos.x, -d_av_palm_pos.y)

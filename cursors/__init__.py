@@ -33,6 +33,14 @@ class CursorState:
 		self.av_pitch = sum(fr.hands[0].direction.pitch for fr in frames) * norm
 		self.av_roll = sum(fr.hands[0].palm_normal.roll for fr in frames) * norm
 		self.av_yaw = sum(fr.hands[0].direction.yaw for fr in frames) * norm
+		# Calculates the hand's average palm position
+		try:
+			self.av_palm_pos = Vector(0, 0, 0)
+			for fr in frames:
+				self.av_palm_pos += fr.hands[0].palm_position
+			self.av_palm_pos *= norm
+		except:
+			self.av_palm_pos = NaN
 		# Calculates the average number of fingers
 		self.av_fingers = sum(len(fr.hands[0].fingers) for fr in frames) * norm
 		# Calculates the hand's average finger tip position
@@ -43,14 +51,6 @@ class CursorState:
 			self.av_tip_pos *= norm
 		except:
 			self.av_tip_pos = NaN
-		# Calculates the hand's average palm position
-		try:
-			self.av_palm_pos = Vector(0, 0, 0)
-			for fr in frames:
-				self.av_palm_pos += fr.hands[0].palm_position
-			self.av_palm_pos *= norm
-		except:
-			self.av_palm_pos = NaN
 		# Check whether the hand is horizontal
 		if self.av_numhands > 0.5:
 			self.is_horizontal = 0
@@ -82,7 +82,7 @@ class BaseCursorListener(Listener):
 	# After this amount of time, a press event is generared (ms)
 	press_timeout = 600
 	# Number of frames to average
-	numframes = 10
+	numframes = 8
 
 	def __init__(self, *args, **kwargs):
 		super(BaseCursorListener, self).__init__(*args, **kwargs)
@@ -175,7 +175,7 @@ class BaseCursorListener(Listener):
 		# Get the required data
 		hand_state = data['leap_state']['current']
 
-		if hand_state.av_fingers >= 4 and not self.active_fist:
+		if hand_state.av_fingers >= 4 and not self.active_fist and not self.press_requested:
 			if hand_state.av_fingers_speed - hand_state.av_palm_vel < -150:
 				repeats = abs(int(hand_state.av_fingers_speed / 50.))
 				repeats = max(repeats, 0)
@@ -190,7 +190,7 @@ class BaseCursorListener(Listener):
 		# Get the required data
 		hand_state = data['leap_state']['current']
 
-		if hand_state.av_fingers >= 4 and not self.active_fist:
+		if hand_state.av_fingers >= 4 and not self.active_fist and not self.press_requested:
 			if hand_state.av_fingers_speed -hand_state.av_palm_vel > 150:
 				repeats = abs(int(hand_state.av_fingers_speed / 50.))
 				repeats = max(repeats, 0)
