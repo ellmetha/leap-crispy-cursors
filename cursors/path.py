@@ -72,3 +72,5 @@ class CrispyPathCursor(BaseCursorListener):
 			self.scroll_up(repeats=data['actions']['scroll_up'])
 		if data['actions']['scroll_down']:
 			self.scroll_down(repeats=data['actions']['scroll_down'])
+		if data['actions']['switch_desk']:
+			self.switch_desktop(data['actions']['switch_desk'])

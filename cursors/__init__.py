@@ -5,8 +5,11 @@ import sys
 import time
 
 # Third party imports
+from Leap import Gesture
 from Leap import Listener
+from Leap import SwipeGesture
 from Leap import Vector
+from pykeyboard import PyKeyboard
 from pymouse import PyMouse
 
 # Local application / specific library imports
@@ -97,6 +100,12 @@ class BaseCursorListener(Listener):
 			self.mouse = kwargs['mouse']
 		else:
 			self.mouse = PyMouse()
+
+		# Fetch a given keyboard object or instanciate it if necessary
+		if 'keyboard' in kwargs and isinstance(kwargs['keyboard'], PyKeyboard):
+			self.keyboard = kwargs['keyboard']
+		else:
+			self.keyboard = PyKeyboard()
 
 		# Init mouse position tracking
 		self.previous_pos = self.mouse.position()
@@ -198,6 +207,20 @@ class BaseCursorListener(Listener):
 				return repeats
 		return False
 
+	def is_switching_desktop(self, latest_frame):
+		"""
+		Determines whether a desktop switch must be induced or not.
+		"""
+		for gesture in latest_frame.gestures():
+			if gesture.type == Gesture.TYPE_SWIPE:
+				swipe = SwipeGesture(gesture)
+				if swipe.state >= 3:
+					if swipe.direction[0] >= 0.8:
+						return 'right'
+					elif swipe.direction[0] <= -0.8:
+						return 'left'
+		return False
+
 	def on_init(self, controller):
 		# Force the listener to stop if therse is no controller and no leapd daemon launched
 		showmessage("Initializing listener", Status.RUNNING, Colors.BLUE)
@@ -215,6 +238,8 @@ class BaseCursorListener(Listener):
 			self.previousframes_set.append(controller.frame(self.numframes + i_frame))
 
 	def on_connect(self, controller):
+		# Enable gestures
+		controller.enable_gesture(Gesture.TYPE_SWIPE);
 		showmessage("Initializing listener", Status.SUCCESS, Colors.GREEN, update=True, newline=True)
 
 	def on_disconnect(self, controller):
@@ -254,6 +279,7 @@ class BaseCursorListener(Listener):
 		release = self.is_releasing(data)
 		scroll_up = self.is_scrolling_up(data)
 		scroll_down = self.is_scrolling_down(data)
+		switch_desk = self.is_switching_desktop(latest_frame)
 
 		data.update({
 			'actions': {
@@ -262,6 +288,7 @@ class BaseCursorListener(Listener):
 				'release': release,
 				'scroll_up': scroll_up,
 				'scroll_down': scroll_down,
+				'switch_desk': switch_desk,
 			}
 		})
 
@@ -330,6 +357,22 @@ class BaseCursorListener(Listener):
 			self.mouse.scroll(vertical=-4)
 			time.sleep(.1)
 
+	def switch_desktop(self, direction):
+		"""
+		Switch to the desktop to the left, right, top or bottom.
+		"""
+		if direction == 'right':
+			self.keyboard.press_key(self.keyboard.alt_key)
+			self.keyboard.press_key(self.keyboard.control_l_key)
+			self.keyboard.tap_key(self.keyboard.right_key)
+			self.keyboard.release_key(self.keyboard.control_l_key)
+			self.keyboard.release_key(self.keyboard.alt_key)
+		elif direction == 'left':
+			self.keyboard.press_key(self.keyboard.alt_key)
+			self.keyboard.press_key(self.keyboard.control_l_key)
+			self.keyboard.tap_key(self.keyboard.left_key)
+			self.keyboard.release_key(self.keyboard.control_l_key)
+			self.keyboard.release_key(self.keyboard.alt_key)
 
 # Sub-packages imports
 from path import *
