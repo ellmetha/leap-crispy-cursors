@@ -22,7 +22,7 @@ Dependencies
 Usage
 -----
 
-Run ``python crisoy-cursors.py`` (use ``--help`` to see available options).
+Run ``python crispy-cursors.py`` (use ``--help`` to see available options).
 
 - Move your hand above the Leap Motion detection area to move the mouse pointer. The cursor speed is inversely proportional to the number of fingers extended. So you should extend your five fingers in order to execute delicate actions
 - Keep your hand on a fixed position during one second to perform a mouse click
