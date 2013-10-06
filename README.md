@@ -1,7 +1,7 @@
 leap-crispy-cursors
 ===================
 
-A set of Leap Motion desktop navigators based on mouse and keyboard events for Linux. Of course, *it is a proof of concept*. Keep in mind that most of desktop environments are not suitable for using the Leap Motion controller as a mouse device.
+A set of Leap Motion desktop navigators based on mouse and keyboard events for Linux. Of course, *it is a proof of concept* ; it can be improved (and you are welcome to do it!). Keep in mind that most of desktop environments are not suitable for using the Leap Motion controller as a mouse device.
 
 The mouse cursor is available in two different modes:
 
