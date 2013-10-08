@@ -107,6 +107,12 @@ class BaseCursorListener(Listener):
 		else:
 			self.keyboard = PyKeyboard()
 
+		if 'click' in kwargs:
+			print("test")
+			self.click_timeout = kwargs['click']
+		if 'press' in kwargs:
+			self.press_timeout = kwargs['press']
+
 		# Init mouse position tracking
 		self.previous_pos = self.mouse.position()
 

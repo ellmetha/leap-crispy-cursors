@@ -21,10 +21,13 @@ class LeapCrispyCursor:
 
 	def __init__(self, parsed_args, *args, **kwargs):
 		self.parsed_args = parsed_args
-
+		
 		# Create a Leap controller and a listener
 		self.controller = Controller()
 		self.listener = self.CURSOR_CHOICES[self.parsed_args.mode]()
+
+		self.listener.click_timeout = self.parsed_args.click
+		self.listener.press_timeout = self.parsed_args.press
 
 	def run(self):
 		self.controller.add_listener(self.listener)
@@ -53,8 +56,13 @@ def main():
 		default='path',
 		help='cursor mode -- \'path\' forces cursor to follow hand and fingers movements ; \'pitch\' forces cursor to follow hand pitch/roll/yaw'
 	)
-	parser.add_argument('-l', '--log', type=str,
-		help='log command output to a file instead of stdout'
+	parser.add_argument('-c', '--click', type=int,
+		default=CrispyPathCursor.click_timeout,
+		help='set the amount of time after which a click event is generared (ms)'
+	)
+	parser.add_argument('-p', '--press', type=int,
+		default=CrispyPathCursor.click_timeout,
+		help='set the amount of time after which a press event is generared (ms)'
 	)
 
 	# Parse args!
