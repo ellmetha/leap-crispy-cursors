@@ -38,3 +38,13 @@ class CrispyPitchCursor(BaseCursorListener):
 
 			if data['actions']['click']:
 				self.click()
+			if data['actions']['press']:
+				self.press()
+			if data['actions']['release']:
+				self.release()
+			if data['actions']['scroll_up']:
+				self.scroll_up(repeats=data['actions']['scroll_up'])
+			if data['actions']['scroll_down']:
+				self.scroll_down(repeats=data['actions']['scroll_down'])
+			if data['actions']['switch_desk']:
+				self.switch_desktop(data['actions']['switch_desk'])
