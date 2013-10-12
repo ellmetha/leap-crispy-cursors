@@ -11,6 +11,9 @@ from Leap import Controller
 # Local application / specific library imports
 from cursors import CrispyPathCursor
 from cursors import CrispyPitchCursor
+from utils import Colors
+from utils import showmessage
+from utils import Status
 
 
 class LeapCrispyCursor:
@@ -39,6 +42,8 @@ class LeapCrispyCursor:
 			pass
 		finally:
 			self.controller.remove_listener(self.listener)
+			showmessage("Removing listener", Status.SUCCESS, Colors.GREEN)
+			print ""
 
 
 def main():
